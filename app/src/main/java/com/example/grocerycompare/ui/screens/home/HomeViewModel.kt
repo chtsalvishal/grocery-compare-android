@@ -48,7 +48,7 @@ class HomeViewModel(
 
     private val _userEntity = repository.getUserEntity()
         .map { it ?: UserEntity() }
-        .stateIn(viewModelScope, SharingStarted.Eagerly, UserEntity())
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), UserEntity())
 
     val uiState: StateFlow<HomeUiState> = combine(
         repository.products,

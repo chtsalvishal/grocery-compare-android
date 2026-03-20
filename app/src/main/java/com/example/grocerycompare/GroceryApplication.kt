@@ -73,6 +73,7 @@ class AppContainer(private val context: android.content.Context) {
             "grocery_db"
         )
         .addMigrations(MIGRATION_6_7, MIGRATION_7_8)
+        .fallbackToDestructiveMigration()
         .build()
     }
 
