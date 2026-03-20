@@ -2,7 +2,7 @@
 <resources>
     <style name="Theme.GroceryCompare" parent="android:Theme.Material.Light.NoActionBar">
         <!-- Match the app's FreshGreen so the window is never black during Compose startup -->
-        <item name="android:windowBackground">#FF4CAF50</item>
+        <item name="android:windowBackground">#FF00843D</item>
         <item name="android:windowNoTitle">true</item>
         <item name="android:windowActionBar">false</item>
     </style>

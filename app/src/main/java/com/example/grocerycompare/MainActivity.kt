@@ -44,40 +44,39 @@ class MainActivity : ComponentActivity() {
                 appReady = true
             }
 
-            if (!appReady) {
-                Box(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .background(Color(0xFF4CAF50))
-                )
-                return@setContent
-            }
-
-            GroceryCompareTheme {
-                Surface(
-                    modifier = Modifier.fillMaxSize(),
-                    color = MaterialTheme.colorScheme.background
-                ) {
-                    val navController = rememberNavController()
-                    Scaffold(
+            if (appReady) {
+                GroceryCompareTheme {
+                    Surface(
                         modifier = Modifier.fillMaxSize(),
-                        bottomBar = { BottomNavBar(navController) },
-                        contentWindowInsets = WindowInsets(0, 0, 0, 0)
-                    ) { innerPadding ->
-                        NavHost(
-                            navController = navController,
-                            startDestination = "home",
-                            modifier = Modifier.padding(bottom = innerPadding.calculateBottomPadding())
-                        ) {
-                            composable("home") {
-                                HomeScreen(repository = appContainer.repository)
-                            }
-                            composable("profile") {
-                                ProfileScreen(repository = appContainer.repository)
+                        color = MaterialTheme.colorScheme.background
+                    ) {
+                        val navController = rememberNavController()
+                        Scaffold(
+                            modifier = Modifier.fillMaxSize(),
+                            bottomBar = { BottomNavBar(navController) },
+                            contentWindowInsets = WindowInsets(0, 0, 0, 0)
+                        ) { innerPadding ->
+                            NavHost(
+                                navController = navController,
+                                startDestination = "home",
+                                modifier = Modifier.padding(bottom = innerPadding.calculateBottomPadding())
+                            ) {
+                                composable("home") {
+                                    HomeScreen(repository = appContainer.repository)
+                                }
+                                composable("profile") {
+                                    ProfileScreen(repository = appContainer.repository)
+                                }
                             }
                         }
                     }
                 }
+            } else {
+                Box(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .background(Color(0xFF00843D))
+                )
             }
         }
     }
