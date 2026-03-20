@@ -7,6 +7,7 @@ import androidx.work.workDataOf
 import kotlinx.coroutines.delay
 import com.example.grocerycompare.GroceryApplication
 import com.example.grocerycompare.data.local.entity.MasterProductEntity
+import com.example.grocerycompare.data.remote.ApiProduct
 import com.example.grocerycompare.util.Categorizer
 import timber.log.Timber
 
@@ -58,14 +59,34 @@ class SyncWorker(
                 )
             }
 
-            setProgress(workDataOf("STATUS" to "Fetching specials...", "PROGRESS" to 20))
+            // Poll fetchSpecials until the backend scrape finishes populating the DB.
+            // On a cold Render start the initial scrape takes ~3-4 min, so we wait up to 5 min.
+            val fetchIntervalMs  = 15_000L
+            val maxFetchWaitMs   = 300_000L   // 5 minutes
+            var fetchWaited      = 0L
+            var products         = emptyList<ApiProduct>()
 
-            val products = container.apiService.fetchSpecials(suburb = suburb, postcode = postcode)
+            while (true) {
+                val elapsed = fetchWaited / 1000
+                setProgress(workDataOf(
+                    "STATUS"   to if (fetchWaited == 0L) "Fetching specials…"
+                                  else "Syncing data… (${elapsed}s)",
+                    "PROGRESS" to (20 + (fetchWaited.toFloat() / maxFetchWaitMs * 55).toInt()).coerceAtMost(75)
+                ))
+
+                products = container.apiService.fetchSpecials(suburb = suburb, postcode = postcode)
+                if (products.isNotEmpty()) break
+
+                fetchWaited += fetchIntervalMs
+                if (fetchWaited > maxFetchWaitMs) break
+                Timber.d("SyncWorker: 0 products returned, backend scrape still running — retrying in ${fetchIntervalMs / 1000}s")
+                delay(fetchIntervalMs)
+            }
 
             if (products.isEmpty()) {
-                Timber.w("SyncWorker: API returned 0 products")
+                Timber.w("SyncWorker: API returned 0 products after ${maxFetchWaitMs / 1000}s")
                 return Result.failure(
-                    workDataOf("STATUS" to "No specials returned — try again later")
+                    workDataOf("STATUS" to "No specials available — try again later")
                 )
             }
 
