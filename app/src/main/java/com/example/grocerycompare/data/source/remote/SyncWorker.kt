@@ -4,6 +4,7 @@ import android.content.Context
 import androidx.work.CoroutineWorker
 import androidx.work.WorkerParameters
 import androidx.work.workDataOf
+import kotlinx.coroutines.delay
 import com.example.grocerycompare.GroceryApplication
 import com.example.grocerycompare.data.local.entity.MasterProductEntity
 import com.example.grocerycompare.util.Categorizer
@@ -30,12 +31,30 @@ class SyncWorker(
         return try {
             setProgress(workDataOf("STATUS" to "Connecting to server...", "PROGRESS" to 5))
 
-            // Liveness check first — give a clear error if the server is down
-            val healthy = container.apiService.isHealthy()
-            if (!healthy) {
-                Timber.w("SyncWorker: Backend is unreachable")
+            // Poll until server is up — handles Render cold-start (~30s warm-up)
+            val pollIntervalMs = 5_000L
+            val maxWaitMs      = 90_000L
+            var waited         = 0L
+            var serverReady    = false
+
+            while (waited <= maxWaitMs) {
+                if (container.apiService.isHealthy()) {
+                    serverReady = true
+                    break
+                }
+                val secs = (waited / 1000).toInt()
+                setProgress(workDataOf(
+                    "STATUS"   to "Server warming up… (${secs}s)",
+                    "PROGRESS" to 5
+                ))
+                delay(pollIntervalMs)
+                waited += pollIntervalMs
+            }
+
+            if (!serverReady) {
+                Timber.w("SyncWorker: Backend unreachable after ${maxWaitMs / 1000}s")
                 return Result.failure(
-                    workDataOf("STATUS" to "Server unreachable — check your connection")
+                    workDataOf("STATUS" to "Server unreachable after 90s — try again later")
                 )
             }
 

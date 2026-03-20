@@ -4,7 +4,14 @@ import android.app.Application
 import androidx.room.Room
 import androidx.room.migration.Migration
 import androidx.sqlite.db.SupportSQLiteDatabase
+import androidx.work.Constraints
 import androidx.work.Configuration
+import androidx.work.ExistingPeriodicWorkPolicy
+import androidx.work.NetworkType
+import androidx.work.PeriodicWorkRequestBuilder
+import androidx.work.WorkManager
+import com.example.grocerycompare.data.source.remote.PreWarmWorker
+import java.util.concurrent.TimeUnit
 import com.example.grocerycompare.BuildConfig
 import com.example.grocerycompare.data.local.AppDatabase
 import com.example.grocerycompare.data.remote.ApiService
@@ -21,6 +28,19 @@ class GroceryApplication : Application(), Configuration.Provider {
                 Timber.plant(Timber.DebugTree())
             }
             container = AppContainer(this)
+            // Keep Render free-tier warm — ping health endpoint every 15 minutes
+            val preWarmRequest = PeriodicWorkRequestBuilder<PreWarmWorker>(15, TimeUnit.MINUTES)
+                .setConstraints(
+                    Constraints.Builder()
+                        .setRequiredNetworkType(NetworkType.CONNECTED)
+                        .build()
+                )
+                .build()
+            WorkManager.getInstance(this).enqueueUniquePeriodicWork(
+                "pre_warm",
+                ExistingPeriodicWorkPolicy.KEEP,
+                preWarmRequest
+            )
             Timber.i("Application container initialized successfully")
         } catch (e: Exception) {
             Timber.e(e, "Failed to initialize application container")
