@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+    Adaptive icon foreground — white shopping cart centred in the 108×108dp canvas.
+    All artwork sits within the 18–90dp safe zone so no launcher shape clips it.
+-->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="108"
+    android:viewportHeight="108">
+
+    <!-- Cart handle / arm -->
+    <path
+        android:fillColor="@android:color/transparent"
+        android:strokeColor="#FFFFFF"
+        android:strokeWidth="6"
+        android:strokeLineCap="round"
+        android:strokeLineJoin="round"
+        android:pathData="M24,34 L36,34 L44,50" />
+
+    <!-- Cart basket (filled trapezoid) -->
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M44,50 L84,50 L78,72 L50,72 Z" />
+
+    <!-- Basket inner divider — gives a wire-basket feel -->
+    <path
+        android:fillColor="@android:color/transparent"
+        android:strokeColor="#00843D"
+        android:strokeWidth="2.5"
+        android:pathData="M64,50 L61,72" />
+
+    <!-- Left wheel -->
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M47,80 a7,7 0 1,0 14,0 a7,7 0 1,0 -14,0" />
+
+    <!-- Right wheel -->
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M65,80 a7,7 0 1,0 14,0 a7,7 0 1,0 -14,0" />
+
+    <!-- Price-tag badge (top-right) — circle with a "$" tick inside -->
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M80,22 a11,11 0 1,0 22,0 a11,11 0 1,0 -22,0" />
+
+    <!-- "$" symbol inside badge (dark green) -->
+    <path
+        android:fillColor="#00843D"
+        android:pathData="M91,16 l0,12 M88,18.5 q0,-2.5 3,-2.5 t3,2.5 q0,2 -3,2.5 q3,0.5 3,2.5 t-3,2.5 q-3,0 -3,-2.5" />
+
+</vector>
