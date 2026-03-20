@@ -16,6 +16,25 @@ android {
         ?: System.getenv("BACKEND_URL")
         ?: "http://10.0.2.2:8000"  // Android emulator → host machine localhost
 
+    // Release signing — only configured when keystore properties are provided.
+    // Falls back to debug signing so the app can always be run in Android Studio.
+    val keystorePath     = (project.findProperty("KEYSTORE_PATH")     as String?) ?: System.getenv("KEYSTORE_PATH")
+    val keystorePassword = (project.findProperty("KEYSTORE_PASSWORD") as String?) ?: System.getenv("KEYSTORE_PASSWORD")
+    val keyAlias         = (project.findProperty("KEY_ALIAS")         as String?) ?: System.getenv("KEY_ALIAS")
+    val keyPassword      = (project.findProperty("KEY_PASSWORD")      as String?) ?: System.getenv("KEY_PASSWORD")
+    val hasKeystoreConfig = keystorePath != null && keystorePassword != null && keyAlias != null && keyPassword != null
+
+    if (hasKeystoreConfig) {
+        signingConfigs {
+            create("release") {
+                storeFile          = file(keystorePath!!)
+                storePassword      = keystorePassword
+                this.keyAlias      = keyAlias!!
+                this.keyPassword   = keyPassword
+            }
+        }
+    }
+
     defaultConfig {
         applicationId = "com.example.grocerycompare"
         minSdk = 26
@@ -36,7 +55,11 @@ android {
             isMinifyEnabled = true
             isShrinkResources = true
             proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro")
-            signingConfig = signingConfigs.getByName("debug")
+            // Use release signing if keystore is configured, otherwise fall back to debug
+            signingConfig = if (hasKeystoreConfig)
+                signingConfigs.getByName("release")
+            else
+                signingConfigs.getByName("debug")
         }
     }
 
