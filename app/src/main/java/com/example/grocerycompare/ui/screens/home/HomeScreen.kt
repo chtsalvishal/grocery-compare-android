@@ -54,7 +54,7 @@ import com.example.grocerycompare.data.source.remote.ScrapeProgress
 import com.example.grocerycompare.ui.theme.*
 
 // ─────────────────────────────────────────────────────────────────────────────
-// Store brand colours
+// Store brand colours (intentionally fixed — not theme-aware)
 // ─────────────────────────────────────────────────────────────────────────────
 private val ColesColor   = Color(0xFFE01A22)
 private val WooliesColor = Color(0xFF178841)
@@ -72,13 +72,13 @@ private val SORT_OPTIONS = listOf(
     "price_asc"   to "Price ↑",
     "price_desc"  to "Price ↓",
     "savings"     to "Savings",
-    "az"          to "A–Z"
+    "az"          to "A–Z",
 )
 
 data class StorePriceEntry(
     val store: String,
     val price: Double,
-    val wasPrice: Double?
+    val wasPrice: Double?,
 )
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -103,78 +103,77 @@ fun HomeScreen(repository: MasterCatalogueRepository) {
                                     "Smart Compare",
                                     style = MaterialTheme.typography.titleMedium,
                                     fontWeight = FontWeight.Bold,
-                                    color = Color.White
+                                    color = Color.White,
                                 )
                                 Text(
                                     "${uiState.suburb}  •  ${uiState.postcode}",
                                     style = MaterialTheme.typography.labelSmall,
-                                    color = Color.White.copy(alpha = 0.75f)
+                                    color = Color.White.copy(alpha = 0.75f),
                                 )
                             }
                         },
                         colors = TopAppBarDefaults.centerAlignedTopAppBarColors(
-                            containerColor = Color.Transparent
+                            containerColor = Color.Transparent,
                         ),
                         actions = {
                             IconButton(
                                 onClick = { viewModel.triggerScrape() },
-                                enabled = !uiState.isRefreshing
+                                enabled = !uiState.isRefreshing,
                             ) {
                                 if (uiState.isRefreshing) {
                                     CircularProgressIndicator(
                                         modifier = Modifier.size(20.dp),
                                         strokeWidth = 2.dp,
-                                        color = Color.White
+                                        color = Color.White,
                                     )
                                 } else {
                                     Icon(Icons.Default.Refresh, contentDescription = "Refresh", tint = Color.White)
                                 }
                             }
                         },
-                        windowInsets = TopAppBarDefaults.windowInsets
+                        windowInsets = TopAppBarDefaults.windowInsets,
                     )
                 }
-            }
+            },
         ) { padding ->
             Column(
                 modifier = Modifier
                     .padding(top = padding.calculateTopPadding())
                     .fillMaxSize()
-                    .background(CleanSlate, RoundedCornerShape(topStart = 24.dp, topEnd = 24.dp))
+                    .background(
+                        MaterialTheme.colorScheme.background,
+                        RoundedCornerShape(topStart = 24.dp, topEnd = 24.dp),
+                    ),
             ) {
-                // Search
                 SearchBar(uiState.searchQuery, viewModel::onSearchQueryChanged)
 
-                // Store toggles + sort dropdown in one row
                 FilterRow(
                     selectedStores = uiState.selectedStores,
                     onStoreToggled = viewModel::toggleStoreSelection,
-                    sortOrder = uiState.sortOrder,
-                    onSortSelected = viewModel::setSortOrder
+                    sortOrder      = uiState.sortOrder,
+                    onSortSelected = viewModel::setSortOrder,
                 )
 
-                // Category chips
                 CategoryRow(
-                    categories = uiState.categories,
+                    categories       = uiState.categories,
                     selectedCategory = uiState.selectedCategory,
-                    onCategorySelected = viewModel::onCategorySelected
+                    onCategorySelected = viewModel::onCategorySelected,
                 )
 
-                // Deal count bar
                 if (uiState.products.isNotEmpty()) {
                     DealCountBar(count = uiState.products.size, isRefreshing = uiState.isRefreshing)
                 }
 
-                // Error banner
+                if (uiState.isWarmingUp) WarmingUpBanner()
+
                 uiState.syncError?.let { ErrorBanner(it) }
 
-                // Content
                 Box(modifier = Modifier.weight(1f)) {
                     when {
                         uiState.isRefreshing && uiState.products.isEmpty() -> {
                             LazyColumn(
                                 contentPadding = PaddingValues(16.dp),
-                                verticalArrangement = Arrangement.spacedBy(12.dp)
+                                verticalArrangement = Arrangement.spacedBy(12.dp),
                             ) { items(6) { ShimmerCard() } }
                         }
                         uiState.products.isEmpty() -> {
@@ -184,9 +183,9 @@ fun HomeScreen(repository: MasterCatalogueRepository) {
                             LazyColumn(
                                 contentPadding = PaddingValues(
                                     start = 16.dp, end = 16.dp,
-                                    top = 8.dp, bottom = 120.dp
+                                    top = 8.dp, bottom = 120.dp,
                                 ),
-                                verticalArrangement = Arrangement.spacedBy(12.dp)
+                                verticalArrangement = Arrangement.spacedBy(12.dp),
                             ) {
                                 items(uiState.products, key = { it.universalName }) { product ->
                                     MasterProductCard(product, uiState.selectedStores)
@@ -195,13 +194,11 @@ fun HomeScreen(repository: MasterCatalogueRepository) {
                         }
                     }
 
-                    // Sync progress panel slides up from bottom
-                    // Wrapped in Column so ColumnScope.AnimatedVisibility resolves correctly
                     Column(modifier = Modifier.align(Alignment.BottomCenter).fillMaxWidth()) {
                         AnimatedVisibility(
                             visible = uiState.isRefreshing,
-                            enter = slideInVertically { it } + fadeIn(),
-                            exit  = slideOutVertically { it } + fadeOut()
+                            enter   = slideInVertically { it } + fadeIn(),
+                            exit    = slideOutVertically { it } + fadeOut(),
                         ) {
                             SyncProgressPanel(progress = uiState.progress)
                         }
@@ -213,48 +210,45 @@ fun HomeScreen(repository: MasterCatalogueRepository) {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// Filter row: store toggles + sort dropdown
+// Filter row
 // ─────────────────────────────────────────────────────────────────────────────
 @Composable
 fun FilterRow(
     selectedStores: Set<String>,
     onStoreToggled: (String) -> Unit,
     sortOrder: String,
-    onSortSelected: (String) -> Unit
+    onSortSelected: (String) -> Unit,
 ) {
     Row(
         modifier = Modifier
             .fillMaxWidth()
             .padding(horizontal = 16.dp, vertical = 6.dp),
         verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.SpaceBetween
+        horizontalArrangement = Arrangement.SpaceBetween,
     ) {
-        // Store pills
         Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
             listOf("Coles", "Woolies", "Aldi").forEach { store ->
                 val selected = selectedStores.contains(store)
-                val color = storeColor(store)
+                val color    = storeColor(store)
                 Surface(
                     modifier = Modifier.clickable { onStoreToggled(store) },
-                    shape = RoundedCornerShape(20.dp),
-                    color = if (selected) color else Color.White,
-                    border = androidx.compose.foundation.BorderStroke(
+                    shape    = RoundedCornerShape(20.dp),
+                    color    = if (selected) color else MaterialTheme.colorScheme.surface,
+                    border   = androidx.compose.foundation.BorderStroke(
                         1.5.dp,
-                        if (selected) color else Color(0xFFE2E8F0)
-                    )
+                        if (selected) color else MaterialTheme.colorScheme.outlineVariant,
+                    ),
                 ) {
                     Text(
-                        text = store,
-                        style = MaterialTheme.typography.labelMedium,
+                        text       = store,
+                        style      = MaterialTheme.typography.labelMedium,
                         fontWeight = FontWeight.Bold,
-                        color = if (selected) Color.White else color,
-                        modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp)
+                        color      = if (selected) Color.White else color,
+                        modifier   = Modifier.padding(horizontal = 12.dp, vertical = 6.dp),
                     )
                 }
             }
         }
-
-        // Sort dropdown
         SortDropdown(sortOrder = sortOrder, onSortSelected = onSortSelected)
     }
 }
@@ -267,34 +261,37 @@ fun SortDropdown(sortOrder: String, onSortSelected: (String) -> Unit) {
     Box {
         Surface(
             modifier = Modifier.clickable { expanded = true },
-            shape = RoundedCornerShape(20.dp),
-            color = Color.White,
-            border = androidx.compose.foundation.BorderStroke(1.5.dp, Color(0xFFE2E8F0))
+            shape    = RoundedCornerShape(20.dp),
+            color    = MaterialTheme.colorScheme.surface,
+            border   = androidx.compose.foundation.BorderStroke(
+                1.5.dp,
+                MaterialTheme.colorScheme.outlineVariant,
+            ),
         ) {
             Row(
-                modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp),
+                modifier  = Modifier.padding(horizontal = 12.dp, vertical = 6.dp),
                 verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(4.dp)
+                horizontalArrangement = Arrangement.spacedBy(4.dp),
             ) {
                 Text(
-                    text = label,
-                    style = MaterialTheme.typography.labelMedium,
+                    text       = label,
+                    style      = MaterialTheme.typography.labelMedium,
                     fontWeight = FontWeight.Bold,
-                    color = TextPrimary
+                    color      = MaterialTheme.colorScheme.onSurface,
                 )
                 Icon(
                     Icons.Default.KeyboardArrowDown,
                     contentDescription = null,
                     modifier = Modifier.size(14.dp),
-                    tint = InactiveSlate
+                    tint     = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
             }
         }
 
         DropdownMenu(
-            expanded = expanded,
+            expanded         = expanded,
             onDismissRequest = { expanded = false },
-            modifier = Modifier.background(Color.White)
+            modifier         = Modifier.background(MaterialTheme.colorScheme.surface),
         ) {
             SORT_OPTIONS.forEach { (key, optLabel) ->
                 DropdownMenuItem(
@@ -302,13 +299,13 @@ fun SortDropdown(sortOrder: String, onSortSelected: (String) -> Unit) {
                         Text(
                             optLabel,
                             fontWeight = if (key == sortOrder) FontWeight.Bold else FontWeight.Normal,
-                            color = if (key == sortOrder) FreshGreen else TextPrimary
+                            color      = if (key == sortOrder) FreshGreen else MaterialTheme.colorScheme.onSurface,
                         )
                     },
                     leadingIcon = if (key == sortOrder) ({
                         Icon(Icons.Default.Check, null, tint = FreshGreen, modifier = Modifier.size(16.dp))
                     }) else null,
-                    onClick = { onSortSelected(key); expanded = false }
+                    onClick = { onSortSelected(key); expanded = false },
                 )
             }
         }
@@ -322,23 +319,31 @@ fun SortDropdown(sortOrder: String, onSortSelected: (String) -> Unit) {
 fun CategoryRow(
     categories: List<String>,
     selectedCategory: String,
-    onCategorySelected: (String) -> Unit
+    onCategorySelected: (String) -> Unit,
 ) {
     if (categories.size <= 1) return
     LazyRow(
         modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 4.dp),
-        horizontalArrangement = Arrangement.spacedBy(8.dp)
+        horizontalArrangement = Arrangement.spacedBy(8.dp),
     ) {
         items(categories) { cat ->
             FilterChip(
                 selected = cat == selectedCategory,
-                onClick = { onCategorySelected(cat) },
-                label = { Text(cat, fontSize = 12.sp) },
-                shape = RoundedCornerShape(20.dp),
-                colors = FilterChipDefaults.filterChipColors(
+                onClick  = { onCategorySelected(cat) },
+                label    = { Text(cat, fontSize = 12.sp) },
+                shape    = RoundedCornerShape(20.dp),
+                colors   = FilterChipDefaults.filterChipColors(
                     selectedContainerColor = FreshGreen,
-                    selectedLabelColor = Color.White
-                )
+                    selectedLabelColor     = Color.White,
+                    containerColor         = MaterialTheme.colorScheme.surface,
+                    labelColor             = MaterialTheme.colorScheme.onSurface,
+                ),
+                border = FilterChipDefaults.filterChipBorder(
+                    enabled           = true,
+                    selected          = cat == selectedCategory,
+                    borderColor       = MaterialTheme.colorScheme.outlineVariant,
+                    selectedBorderColor = FreshGreen,
+                ),
             )
         }
     }
@@ -354,45 +359,93 @@ fun DealCountBar(count: Int, isRefreshing: Boolean) {
             .fillMaxWidth()
             .padding(horizontal = 20.dp, vertical = 6.dp),
         verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.SpaceBetween
+        horizontalArrangement = Arrangement.SpaceBetween,
     ) {
         Text(
-            text = "$count deals found",
-            style = MaterialTheme.typography.labelMedium,
-            color = InactiveSlate,
-            fontWeight = FontWeight.Medium
+            text       = "$count deals found",
+            style      = MaterialTheme.typography.labelMedium,
+            color      = MaterialTheme.colorScheme.onSurfaceVariant,
+            fontWeight = FontWeight.Medium,
         )
         if (isRefreshing) {
             Text(
-                text = "Updating…",
-                style = MaterialTheme.typography.labelSmall,
-                color = FreshGreen,
-                fontWeight = FontWeight.SemiBold
+                text       = "Updating…",
+                style      = MaterialTheme.typography.labelSmall,
+                color      = FreshGreen,
+                fontWeight = FontWeight.SemiBold,
             )
         }
     }
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// Search bar
+// Search bar  — fixes white-on-white text bug in dark mode
 // ─────────────────────────────────────────────────────────────────────────────
 @Composable
 fun SearchBar(query: String, onQueryChange: (String) -> Unit) {
     OutlinedTextField(
-        value = query,
+        value       = query,
         onValueChange = onQueryChange,
-        modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 10.dp),
-        placeholder = { Text("Search deals…", color = InactiveSlate) },
-        leadingIcon = { Icon(Icons.Default.Search, contentDescription = null, tint = InactiveSlate) },
-        shape = RoundedCornerShape(14.dp),
+        modifier    = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 10.dp),
+        placeholder = {
+            Text("Search deals…", color = MaterialTheme.colorScheme.onSurfaceVariant)
+        },
+        leadingIcon = {
+            Icon(
+                Icons.Default.Search,
+                contentDescription = null,
+                tint = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+        },
+        shape     = RoundedCornerShape(14.dp),
         singleLine = true,
-        colors = OutlinedTextFieldDefaults.colors(
-            focusedContainerColor = Color.White,
-            unfocusedContainerColor = Color.White,
-            focusedBorderColor = FreshGreen,
-            unfocusedBorderColor = Color(0xFFE2E8F0)
-        )
+        colors    = OutlinedTextFieldDefaults.colors(
+            focusedContainerColor   = MaterialTheme.colorScheme.surface,
+            unfocusedContainerColor = MaterialTheme.colorScheme.surface,
+            focusedTextColor        = MaterialTheme.colorScheme.onSurface,
+            unfocusedTextColor      = MaterialTheme.colorScheme.onSurface,
+            cursorColor             = FreshGreen,
+            focusedBorderColor      = FreshGreen,
+            unfocusedBorderColor    = MaterialTheme.colorScheme.outlineVariant,
+        ),
     )
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Warming-up banner (Render cold-start info)
+// ─────────────────────────────────────────────────────────────────────────────
+@Composable
+fun WarmingUpBanner() {
+    Surface(
+        modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 4.dp),
+        color    = FreshGreen.copy(alpha = 0.10f),
+        shape    = RoundedCornerShape(8.dp),
+    ) {
+        Row(
+            modifier  = Modifier.padding(horizontal = 12.dp, vertical = 10.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(10.dp),
+        ) {
+            CircularProgressIndicator(
+                modifier    = Modifier.size(14.dp),
+                strokeWidth = 2.dp,
+                color       = FreshGreen,
+            )
+            Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
+                Text(
+                    "Server is warming up…",
+                    style      = MaterialTheme.typography.labelMedium,
+                    fontWeight = FontWeight.SemiBold,
+                    color      = FreshGreen,
+                )
+                Text(
+                    "First sync takes ~30 s. Hang tight!",
+                    style = MaterialTheme.typography.labelSmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+            }
+        }
+    }
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -402,20 +455,20 @@ fun SearchBar(query: String, onQueryChange: (String) -> Unit) {
 fun ErrorBanner(message: String) {
     Surface(
         modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 4.dp),
-        color = ColesColor.copy(alpha = 0.1f),
-        shape = RoundedCornerShape(8.dp)
+        color    = ColesColor.copy(alpha = 0.10f),
+        shape    = RoundedCornerShape(8.dp),
     ) {
         Text(
-            text = "⚠  $message",
-            style = MaterialTheme.typography.labelSmall,
-            color = ColesColor,
-            modifier = Modifier.padding(horizontal = 12.dp, vertical = 8.dp)
+            text     = "⚠  $message",
+            style    = MaterialTheme.typography.labelSmall,
+            color    = ColesColor,
+            modifier = Modifier.padding(horizontal = 12.dp, vertical = 8.dp),
         )
     }
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// Sync progress panel (slides up from bottom)
+// Sync progress panel
 // ─────────────────────────────────────────────────────────────────────────────
 @Composable
 fun SyncProgressPanel(progress: ScrapeProgress?) {
@@ -428,77 +481,72 @@ fun SyncProgressPanel(progress: ScrapeProgress?) {
                 .asComposeRenderEffect()
         } else Modifier
 
-    Box(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(12.dp)
-    ) {
-        // Frosted glass backdrop
+    val surfaceColor = MaterialTheme.colorScheme.surface
+
+    Box(modifier = Modifier.fillMaxWidth().padding(12.dp)) {
         Surface(
-            modifier = Modifier.matchParentSize().then(blurMod),
-            color = Color.White.copy(alpha = 0.85f),
-            shape = RoundedCornerShape(20.dp),
-            shadowElevation = 8.dp
+            modifier        = Modifier.matchParentSize().then(blurMod),
+            color           = surfaceColor.copy(alpha = 0.92f),
+            shape           = RoundedCornerShape(20.dp),
+            shadowElevation = 8.dp,
         ) {}
 
         Column(modifier = Modifier.padding(16.dp)) {
-            // Header
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
+                verticalAlignment = Alignment.CenterVertically,
             ) {
                 Text(
-                    text = "Syncing fresh prices",
-                    style = MaterialTheme.typography.titleSmall,
+                    text       = "Syncing fresh prices",
+                    style      = MaterialTheme.typography.titleSmall,
                     fontWeight = FontWeight.Bold,
-                    color = TextPrimary
+                    color      = MaterialTheme.colorScheme.onSurface,
                 )
                 Text(
-                    text = "${(pct * 100).toInt()}%",
-                    style = MaterialTheme.typography.labelMedium,
-                    color = FreshGreen,
-                    fontWeight = FontWeight.Bold
+                    text       = "${(pct * 100).toInt()}%",
+                    style      = MaterialTheme.typography.labelMedium,
+                    color      = FreshGreen,
+                    fontWeight = FontWeight.Bold,
                 )
             }
 
             Spacer(modifier = Modifier.height(10.dp))
 
-            // Animated progress bar
             LinearProgressIndicator(
-                progress = { pct },
-                modifier = Modifier.fillMaxWidth().height(6.dp).clip(CircleShape),
-                color = FreshGreen,
-                trackColor = FreshGreen.copy(alpha = 0.15f)
+                progress    = { pct },
+                modifier    = Modifier.fillMaxWidth().height(6.dp).clip(CircleShape),
+                color       = FreshGreen,
+                trackColor  = FreshGreen.copy(alpha = 0.15f),
             )
 
             Spacer(modifier = Modifier.height(12.dp))
 
-            // Store indicators
             Row(
                 modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceEvenly
+                horizontalArrangement = Arrangement.SpaceEvenly,
             ) {
                 listOf("Coles", "Woolies", "Aldi").forEach { store ->
-                    val status = progress?.storeStatuses?.firstOrNull { it.name.equals(store, ignoreCase = true) ||
-                        (store == "Woolies" && it.name.equals("Woolworths", ignoreCase = true)) }
+                    val status = progress?.storeStatuses?.firstOrNull {
+                        it.name.equals(store, ignoreCase = true) ||
+                        (store == "Woolies" && it.name.equals("Woolworths", ignoreCase = true))
+                    }
                     StoreIndicator(
-                        store = store,
-                        isDone = status?.isDone ?: false,
-                        isLoading = progress != null && !(status?.isDone ?: false)
+                        store     = store,
+                        isDone    = status?.isDone ?: false,
+                        isLoading = progress != null && !(status?.isDone ?: false),
                     )
                 }
             }
 
             Spacer(modifier = Modifier.height(10.dp))
 
-            // Status text
             Text(
-                text = progress?.message ?: "Connecting…",
-                style = MaterialTheme.typography.bodySmall,
-                color = InactiveSlate,
+                text      = progress?.message ?: "Connecting…",
+                style     = MaterialTheme.typography.bodySmall,
+                color     = MaterialTheme.colorScheme.onSurfaceVariant,
                 textAlign = TextAlign.Center,
-                modifier = Modifier.fillMaxWidth()
+                modifier  = Modifier.fillMaxWidth(),
             )
         }
     }
@@ -511,39 +559,36 @@ fun StoreIndicator(store: String, isDone: Boolean, isLoading: Boolean) {
     val alpha by infiniteTransition.animateFloat(
         initialValue = 0.4f, targetValue = 1f,
         animationSpec = infiniteRepeatable(
-            animation = tween(800, easing = FastOutSlowInEasing),
-            repeatMode = RepeatMode.Reverse
+            animation  = tween(800, easing = FastOutSlowInEasing),
+            repeatMode = RepeatMode.Reverse,
         ),
-        label = "pulse"
+        label = "pulse",
     )
 
     Column(horizontalAlignment = Alignment.CenterHorizontally) {
-        Box(
-            modifier = Modifier.size(36.dp),
-            contentAlignment = Alignment.Center
-        ) {
+        Box(modifier = Modifier.size(36.dp), contentAlignment = Alignment.Center) {
             Surface(
                 modifier = Modifier.fillMaxSize(),
-                shape = CircleShape,
-                color = color.copy(alpha = if (isDone) 1f else if (isLoading) alpha else 0.2f)
+                shape    = CircleShape,
+                color    = color.copy(alpha = if (isDone) 1f else if (isLoading) alpha else 0.2f),
             ) {}
             if (isDone) {
                 Icon(Icons.Default.Check, contentDescription = null, tint = Color.White, modifier = Modifier.size(18.dp))
             } else {
                 Text(
-                    text = store.first().toString(),
-                    style = MaterialTheme.typography.labelLarge,
+                    text       = store.first().toString(),
+                    style      = MaterialTheme.typography.labelLarge,
                     fontWeight = FontWeight.Black,
-                    color = Color.White
+                    color      = Color.White,
                 )
             }
         }
         Spacer(modifier = Modifier.height(4.dp))
         Text(
-            text = if (isDone) "Done" else if (isLoading) "Syncing" else "Waiting",
-            style = MaterialTheme.typography.labelSmall,
-            color = if (isDone) FreshGreen else InactiveSlate,
-            fontWeight = if (isDone) FontWeight.Bold else FontWeight.Normal
+            text       = if (isDone) "Done" else if (isLoading) "Syncing" else "Waiting",
+            style      = MaterialTheme.typography.labelSmall,
+            color      = if (isDone) FreshGreen else MaterialTheme.colorScheme.onSurfaceVariant,
+            fontWeight = if (isDone) FontWeight.Bold else FontWeight.Normal,
         )
     }
 }
@@ -559,12 +604,12 @@ fun MasterProductCard(product: MasterProductEntity, selectedStores: Set<String>)
     val scale by animateFloatAsState(if (isPressed) 0.97f else 1f, label = "scale")
 
     val entries = buildList {
-        if (selectedStores.contains("Coles") && product.colesPrice > 0)
-            add(StorePriceEntry("Coles", product.colesPrice, product.colesWasPrice.takeIf { it > 0 }))
+        if (selectedStores.contains("Coles")   && product.colesPrice   > 0)
+            add(StorePriceEntry("Coles",   product.colesPrice,   product.colesWasPrice.takeIf   { it > 0 }))
         if (selectedStores.contains("Woolies") && product.wooliesPrice > 0)
             add(StorePriceEntry("Woolies", product.wooliesPrice, product.wooliesWasPrice.takeIf { it > 0 }))
-        if (selectedStores.contains("Aldi") && product.aldiPrice > 0)
-            add(StorePriceEntry("Aldi", product.aldiPrice, product.aldiWasPrice.takeIf { it > 0 }))
+        if (selectedStores.contains("Aldi")    && product.aldiPrice    > 0)
+            add(StorePriceEntry("Aldi",    product.aldiPrice,    product.aldiWasPrice.takeIf    { it > 0 }))
     }
     if (entries.isEmpty()) return
 
@@ -597,26 +642,34 @@ fun MasterProductCard(product: MasterProductEntity, selectedStores: Set<String>)
             .clickable(interactionSource = interactionSource, indication = null) {
                 haptic.performHapticFeedback(HapticFeedbackType.LongPress)
             },
-        shape = RoundedCornerShape(16.dp),
-        colors = CardDefaults.cardColors(containerColor = Color.White),
-        elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
+        shape   = RoundedCornerShape(16.dp),
+        colors  = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+        elevation = CardDefaults.cardElevation(defaultElevation = 1.dp),
     ) {
         Column {
-            // Product header
             Row(
                 modifier = Modifier.padding(start = 14.dp, end = 14.dp, top = 14.dp, bottom = 10.dp),
-                verticalAlignment = Alignment.CenterVertically
+                verticalAlignment = Alignment.CenterVertically,
             ) {
-                Surface(modifier = Modifier.size(60.dp), shape = RoundedCornerShape(10.dp), color = CleanSlate) {
+                Surface(
+                    modifier = Modifier.size(60.dp),
+                    shape    = RoundedCornerShape(10.dp),
+                    color    = MaterialTheme.colorScheme.surfaceVariant,
+                ) {
                     if (product.imageUrl.isNotEmpty()) {
                         AsyncImage(
-                            model = product.imageUrl,
+                            model            = product.imageUrl,
                             contentDescription = product.universalName,
-                            contentScale = ContentScale.Fit,
-                            modifier = Modifier.fillMaxSize().padding(6.dp)
+                            contentScale     = ContentScale.Fit,
+                            modifier         = Modifier.fillMaxSize().padding(6.dp),
                         )
                     } else {
-                        Icon(Icons.Default.Search, contentDescription = null, tint = InactiveSlate, modifier = Modifier.padding(14.dp))
+                        Icon(
+                            Icons.Default.Search,
+                            contentDescription = null,
+                            tint     = MaterialTheme.colorScheme.onSurfaceVariant,
+                            modifier = Modifier.padding(14.dp),
+                        )
                     }
                 }
 
@@ -624,67 +677,74 @@ fun MasterProductCard(product: MasterProductEntity, selectedStores: Set<String>)
 
                 Column(modifier = Modifier.weight(1f)) {
                     Text(
-                        text = product.universalName,
-                        style = MaterialTheme.typography.titleSmall,
+                        text       = product.universalName,
+                        style      = MaterialTheme.typography.titleSmall,
                         fontWeight = FontWeight.Bold,
-                        maxLines = 2,
-                        overflow = TextOverflow.Ellipsis,
-                        color = TextPrimary
+                        maxLines   = 2,
+                        overflow   = TextOverflow.Ellipsis,
+                        color      = MaterialTheme.colorScheme.onSurface,
                     )
                     Spacer(modifier = Modifier.height(4.dp))
-                    Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-                        Surface(shape = RoundedCornerShape(4.dp), color = FreshGreen.copy(alpha = 0.10f)) {
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(6.dp),
+                    ) {
+                        Surface(
+                            shape = RoundedCornerShape(4.dp),
+                            color = FreshGreen.copy(alpha = 0.10f),
+                        ) {
                             Text(
-                                text = product.category,
-                                style = MaterialTheme.typography.labelSmall,
-                                color = FreshGreen,
+                                text       = product.category,
+                                style      = MaterialTheme.typography.labelSmall,
+                                color      = FreshGreen,
                                 fontWeight = FontWeight.SemiBold,
-                                modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp)
+                                modifier   = Modifier.padding(horizontal = 6.dp, vertical = 2.dp),
                             )
                         }
                         if (entries.size > 1) {
-                            Text("•", style = MaterialTheme.typography.labelSmall, color = InactiveSlate)
+                            Text("•", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
                             Text(
                                 "${entries.size} stores",
                                 style = MaterialTheme.typography.labelSmall,
-                                color = InactiveSlate
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
                             )
                         }
                     }
                 }
             }
 
-            HorizontalDivider(color = CleanSlate, thickness = 1.dp)
+            HorizontalDivider(
+                color     = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f),
+                thickness = 1.dp,
+            )
 
-            // Store price tiles
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(IntrinsicSize.Max)
                     .padding(horizontal = 10.dp, vertical = 10.dp),
-                horizontalArrangement = Arrangement.spacedBy(8.dp)
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
             ) {
                 entries.forEach { entry ->
                     StorePriceTile(
-                        entry = entry,
+                        entry      = entry,
                         isCheapest = entry.price == minPrice && entries.size > 1,
-                        modifier = Modifier.weight(1f).fillMaxHeight()
+                        modifier   = Modifier.weight(1f).fillMaxHeight(),
                     )
                 }
             }
 
-            // Savings banner
             if (savingText != null) {
                 Surface(
                     color = FreshGreen.copy(alpha = 0.08f),
-                    shape = RoundedCornerShape(bottomStart = 16.dp, bottomEnd = 16.dp)
+                    shape = RoundedCornerShape(bottomStart = 16.dp, bottomEnd = 16.dp),
                 ) {
                     Text(
-                        text = savingText,
-                        style = MaterialTheme.typography.labelSmall,
-                        color = FreshGreen,
+                        text       = savingText,
+                        style      = MaterialTheme.typography.labelSmall,
+                        color      = FreshGreen,
                         fontWeight = FontWeight.SemiBold,
-                        modifier = Modifier.fillMaxWidth().padding(horizontal = 14.dp, vertical = 8.dp)
+                        modifier   = Modifier.fillMaxWidth().padding(horizontal = 14.dp, vertical = 8.dp),
                     )
                 }
             }
@@ -694,52 +754,55 @@ fun MasterProductCard(product: MasterProductEntity, selectedStores: Set<String>)
 
 @Composable
 fun StorePriceTile(entry: StorePriceEntry, isCheapest: Boolean, modifier: Modifier = Modifier) {
-    val color = storeColor(entry.store)
-    val borderColor = if (isCheapest) FreshGreen else Color(0xFFE2E8F0)
+    val color       = storeColor(entry.store)
+    val borderColor = if (isCheapest) FreshGreen else MaterialTheme.colorScheme.outlineVariant
 
     Column(
         modifier = modifier
             .border(if (isCheapest) 2.dp else 1.dp, borderColor, RoundedCornerShape(10.dp))
-            .background(if (isCheapest) FreshGreen.copy(alpha = 0.04f) else Color.Transparent, RoundedCornerShape(10.dp))
+            .background(
+                if (isCheapest) FreshGreen.copy(alpha = 0.04f) else Color.Transparent,
+                RoundedCornerShape(10.dp),
+            )
             .padding(horizontal = 8.dp, vertical = 10.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.SpaceBetween
+        verticalArrangement = Arrangement.SpaceBetween,
     ) {
         Text(
-            text = entry.store.uppercase(),
-            style = MaterialTheme.typography.labelSmall,
-            fontWeight = FontWeight.ExtraBold,
-            color = color,
-            letterSpacing = 0.5.sp
+            text          = entry.store.uppercase(),
+            style         = MaterialTheme.typography.labelSmall,
+            fontWeight    = FontWeight.ExtraBold,
+            color         = color,
+            letterSpacing = 0.5.sp,
         )
 
         Box(modifier = Modifier.height(16.dp), contentAlignment = Alignment.Center) {
             if (entry.wasPrice != null && entry.wasPrice > entry.price) {
                 Text(
-                    text = "\$${String.format(java.util.Locale.US, "%.2f", entry.wasPrice)}",
-                    fontSize = 10.sp,
-                    color = InactiveSlate,
-                    textDecoration = TextDecoration.LineThrough
+                    text           = "\$${String.format(java.util.Locale.US, "%.2f", entry.wasPrice)}",
+                    fontSize       = 10.sp,
+                    color          = MaterialTheme.colorScheme.onSurfaceVariant,
+                    textDecoration = TextDecoration.LineThrough,
                 )
             }
         }
 
         Text(
-            text = "\$${String.format(java.util.Locale.US, "%.2f", entry.price)}",
+            text       = "\$${String.format(java.util.Locale.US, "%.2f", entry.price)}",
             fontWeight = FontWeight.Black,
-            color = if (isCheapest) FreshGreen else TextPrimary,
-            fontSize = 22.sp
+            color      = if (isCheapest) FreshGreen else MaterialTheme.colorScheme.onSurface,
+            fontSize   = 22.sp,
         )
 
         Box(modifier = Modifier.height(20.dp), contentAlignment = Alignment.Center) {
             if (isCheapest) {
                 Surface(color = FreshGreen, shape = RoundedCornerShape(4.dp)) {
                     Text(
-                        text = "BEST PRICE",
-                        color = Color.White,
+                        text       = "BEST PRICE",
+                        color      = Color.White,
                         fontWeight = FontWeight.Bold,
-                        fontSize = 8.sp,
-                        modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp)
+                        fontSize   = 8.sp,
+                        modifier   = Modifier.padding(horizontal = 6.dp, vertical = 2.dp),
                     )
                 }
             }
@@ -756,17 +819,21 @@ fun ShimmerCard() {
     val x by transition.animateFloat(
         initialValue = 0f, targetValue = 1000f,
         animationSpec = infiniteRepeatable(tween(1200, easing = FastOutSlowInEasing), RepeatMode.Restart),
-        label = "shimmer"
+        label = "shimmer",
     )
+    // Theme-aware shimmer colours — visible in both light and dark mode
+    val shimmerBase     = MaterialTheme.colorScheme.surfaceVariant
+    val shimmerHighlight = MaterialTheme.colorScheme.surface
     val brush = Brush.linearGradient(
-        colors = listOf(Color(0xFFEEEEEE), Color(0xFFDDDDDD), Color(0xFFEEEEEE)),
-        start = Offset.Zero, end = Offset(x, x)
+        colors = listOf(shimmerBase, shimmerHighlight, shimmerBase),
+        start  = Offset.Zero,
+        end    = Offset(x, x),
     )
     Card(
-        modifier = Modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(16.dp),
-        colors = CardDefaults.cardColors(containerColor = Color.White),
-        elevation = CardDefaults.cardElevation(1.dp)
+        modifier  = Modifier.fillMaxWidth(),
+        shape     = RoundedCornerShape(16.dp),
+        colors    = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+        elevation = CardDefaults.cardElevation(1.dp),
     ) {
         Column(modifier = Modifier.padding(14.dp)) {
             Row {
@@ -796,31 +863,36 @@ fun EmptyScreen(onScrape: () -> Unit) {
     Column(
         modifier = Modifier.fillMaxSize().padding(40.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.Center
+        verticalArrangement = Arrangement.Center,
     ) {
         Surface(shape = CircleShape, color = FreshGreen.copy(alpha = 0.1f), modifier = Modifier.size(96.dp)) {
             Icon(
                 Icons.Default.Search,
                 contentDescription = null,
                 modifier = Modifier.padding(28.dp),
-                tint = FreshGreen.copy(alpha = 0.5f)
+                tint     = FreshGreen.copy(alpha = 0.5f),
             )
         }
         Spacer(modifier = Modifier.height(24.dp))
-        Text("No Deals Yet", style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Bold, color = TextPrimary)
+        Text(
+            "No Deals Yet",
+            style      = MaterialTheme.typography.headlineSmall,
+            fontWeight = FontWeight.Bold,
+            color      = MaterialTheme.colorScheme.onBackground,
+        )
         Spacer(modifier = Modifier.height(8.dp))
         Text(
             "Tap below to sync the latest specials from Coles, Woolies & Aldi.",
             textAlign = TextAlign.Center,
-            style = MaterialTheme.typography.bodyMedium,
-            color = InactiveSlate
+            style     = MaterialTheme.typography.bodyMedium,
+            color     = MaterialTheme.colorScheme.onSurfaceVariant,
         )
         Spacer(modifier = Modifier.height(32.dp))
         Button(
-            onClick = onScrape,
+            onClick  = onScrape,
             modifier = Modifier.fillMaxWidth().height(52.dp),
-            shape = RoundedCornerShape(14.dp),
-            colors = ButtonDefaults.buttonColors(containerColor = FreshGreen)
+            shape    = RoundedCornerShape(14.dp),
+            colors   = ButtonDefaults.buttonColors(containerColor = FreshGreen),
         ) {
             Icon(Icons.Default.Refresh, contentDescription = null, tint = Color.White)
             Spacer(modifier = Modifier.width(8.dp))

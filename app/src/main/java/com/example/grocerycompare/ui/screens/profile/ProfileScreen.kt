@@ -14,7 +14,6 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.grocerycompare.data.repository.MasterCatalogueRepository
 import com.example.grocerycompare.ui.screens.home.HomeViewModel
-import com.example.grocerycompare.ui.theme.CleanSlate
 import com.example.grocerycompare.ui.theme.FreshGreen
 import kotlinx.coroutines.launch
 
@@ -48,7 +47,7 @@ fun ProfileScreen(
             modifier = Modifier
                 .padding(padding)
                 .fillMaxSize()
-                .background(CleanSlate)
+                .background(MaterialTheme.colorScheme.background)
                 .padding(24.dp)
         ) {
             Text(
