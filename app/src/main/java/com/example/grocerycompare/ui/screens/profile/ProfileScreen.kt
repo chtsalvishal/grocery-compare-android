@@ -23,9 +23,9 @@ import kotlinx.coroutines.launch
 fun ProfileScreen(
     repository: MasterCatalogueRepository
 ) {
-    val context = LocalContext.current
+    val application = LocalContext.current.applicationContext as android.app.Application
     val viewModel: HomeViewModel = viewModel(
-        factory = HomeViewModel.Factory(context, repository)
+        factory = HomeViewModel.Factory(application, repository)
     )
     
     val uiState by viewModel.uiState.collectAsState()

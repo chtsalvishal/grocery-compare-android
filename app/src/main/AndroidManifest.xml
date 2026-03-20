@@ -27,7 +27,6 @@
         <activity
             android:name=".MainActivity"
             android:exported="true"
-            android:label="Grocery Compare"
             android:theme="@style/Theme.GroceryCompare">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />

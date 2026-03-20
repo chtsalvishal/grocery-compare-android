@@ -1,7 +1,6 @@
 package com.example.grocerycompare
 
 import android.app.Application
-import android.util.Log
 import androidx.room.Room
 import androidx.room.migration.Migration
 import androidx.sqlite.db.SupportSQLiteDatabase
@@ -22,15 +21,15 @@ class GroceryApplication : Application(), Configuration.Provider {
                 Timber.plant(Timber.DebugTree())
             }
             container = AppContainer(this)
-            Log.i("GroceryApplication", "Application container initialized successfully")
+            Timber.i("Application container initialized successfully")
         } catch (e: Exception) {
-            Log.e("GroceryApplication", "Failed to initialize application container", e)
+            Timber.e(e, "Failed to initialize application container")
         }
     }
 
     override val workManagerConfiguration: Configuration
         get() = Configuration.Builder()
-            .setMinimumLoggingLevel(Log.INFO)
+            .setMinimumLoggingLevel(android.util.Log.INFO)
             .build()
 }
 

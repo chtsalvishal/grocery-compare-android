@@ -87,8 +87,8 @@ data class StorePriceEntry(
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun HomeScreen(repository: MasterCatalogueRepository) {
-    val context = LocalContext.current
-    val viewModel: HomeViewModel = viewModel(factory = HomeViewModel.Factory(context, repository))
+    val application = LocalContext.current.applicationContext as android.app.Application
+    val viewModel: HomeViewModel = viewModel(factory = HomeViewModel.Factory(application, repository))
     val uiState by viewModel.uiState.collectAsState()
 
     Box(modifier = Modifier.fillMaxSize().background(FreshGreen)) {
@@ -584,9 +584,9 @@ fun MasterProductCard(product: MasterProductEntity, selectedStores: Set<String>)
 
     val savingText = when {
         specialStoreEntry != null && biggestSpecialSaving != null ->
-            "🏷  Save \$${String.format("%.2f", biggestSpecialSaving)} on special at ${specialStoreEntry.store}"
+            "🏷  Save \$${String.format(java.util.Locale.US, "%.2f", biggestSpecialSaving)} on special at ${specialStoreEntry.store}"
         entries.size > 1 && priceDiff >= 0.10 ->
-            "💚  Save \$${String.format("%.2f", priceDiff)} by choosing ${cheapestEntry.store}"
+            "💚  Save \$${String.format(java.util.Locale.US, "%.2f", priceDiff)} by choosing ${cheapestEntry.store}"
         else -> null
     }
 
@@ -716,7 +716,7 @@ fun StorePriceTile(entry: StorePriceEntry, isCheapest: Boolean, modifier: Modifi
         Box(modifier = Modifier.height(16.dp), contentAlignment = Alignment.Center) {
             if (entry.wasPrice != null && entry.wasPrice > entry.price) {
                 Text(
-                    text = "\$${String.format("%.2f", entry.wasPrice)}",
+                    text = "\$${String.format(java.util.Locale.US, "%.2f", entry.wasPrice)}",
                     fontSize = 10.sp,
                     color = InactiveSlate,
                     textDecoration = TextDecoration.LineThrough
@@ -725,7 +725,7 @@ fun StorePriceTile(entry: StorePriceEntry, isCheapest: Boolean, modifier: Modifi
         }
 
         Text(
-            text = "\$${String.format("%.2f", entry.price)}",
+            text = "\$${String.format(java.util.Locale.US, "%.2f", entry.price)}",
             fontWeight = FontWeight.Black,
             color = if (isCheapest) FreshGreen else TextPrimary,
             fontSize = 22.sp

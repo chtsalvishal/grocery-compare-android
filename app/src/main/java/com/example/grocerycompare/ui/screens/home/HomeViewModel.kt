@@ -1,6 +1,7 @@
 package com.example.grocerycompare.ui.screens.home
 
-import android.content.Context
+import android.app.Application
+import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.asFlow
@@ -33,9 +34,9 @@ data class HomeUiState(
 )
 
 class HomeViewModel(
-    private val context: Context,
+    application: Application,
     private val repository: MasterCatalogueRepository
-) : ViewModel() {
+) : AndroidViewModel(application) {
 
     private val _isRefreshing = MutableStateFlow(false)
     private val _scrapeProgress = MutableStateFlow<ScrapeProgress?>(null)
@@ -150,7 +151,7 @@ class HomeViewModel(
     }
 
     fun triggerScrape() {
-        val workManager = WorkManager.getInstance(context)
+        val workManager = WorkManager.getInstance(getApplication())
         val user = _userEntity.value
 
         _isRefreshing.value = true
@@ -215,11 +216,11 @@ class HomeViewModel(
     }
 
     class Factory(
-        private val context: Context,
+        private val application: Application,
         private val repository: MasterCatalogueRepository
     ) : ViewModelProvider.Factory {
         @Suppress("UNCHECKED_CAST")
         override fun <T : ViewModel> create(modelClass: Class<T>): T =
-            HomeViewModel(context, repository) as T
+            HomeViewModel(application, repository) as T
     }
 }

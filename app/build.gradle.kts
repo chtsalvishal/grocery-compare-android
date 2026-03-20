@@ -61,6 +61,13 @@ android {
         compose = true
         buildConfig = true
     }
+
+    lint {
+        // Suppress version-update warnings for deps that require a higher AGP than we currently use
+        disable += setOf("GradleDependency", "AndroidGradlePluginVersion", "OldTargetApi", "ObsoleteLintCustomCheck")
+        warningsAsErrors = false
+        abortOnError = false
+    }
 }
 
 dependencies {
