@@ -1,0 +1,23 @@
+# Gradle
+.gradle/
+build/
+**/build/
+local.properties
+
+# Android Studio
+.idea/workspace.xml
+.idea/navEditor.xml
+.idea/assetWizard.xml
+.idea/caches/
+.idea/libraries/
+.idea/modules.xml
+*.iml
+
+# Keys and secrets
+*.jks
+*.keystore
+google-services.json
+
+# OS
+.DS_Store
+Thumbs.db
