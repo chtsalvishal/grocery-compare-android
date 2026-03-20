@@ -30,7 +30,6 @@ class ApiService(val baseUrl: String) {
 
     private val json = Json {
         ignoreUnknownKeys = true
-        isLenient = true
     }
 
     private val client = HttpClient(Android) {

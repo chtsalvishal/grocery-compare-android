@@ -20,8 +20,10 @@ class SyncWorker(
 ) : CoroutineWorker(appContext, workerParams) {
 
     override suspend fun doWork(): Result {
-        val suburb = inputData.getString("SUBURB") ?: "Bentleigh"
-        val postcode = inputData.getString("POSTCODE") ?: "3204"
+        val rawSuburb = inputData.getString("SUBURB") ?: "Bentleigh"
+        val rawPostcode = inputData.getString("POSTCODE") ?: "3204"
+        val suburb = if (rawSuburb.matches(Regex("[a-zA-Z ]{1,50}"))) rawSuburb else "Bentleigh"
+        val postcode = if (rawPostcode.matches(Regex("\\d{4}"))) rawPostcode else "3204"
 
         val container = (applicationContext as GroceryApplication).container
 
@@ -76,8 +78,8 @@ class SyncWorker(
             Result.success(workDataOf("COUNT" to products.size))
 
         } catch (e: Exception) {
-            Timber.e(e, "SyncWorker: Fatal error")
-            Result.failure(workDataOf("STATUS" to "Sync failed: ${e.message}"))
+            Timber.e(e, "SyncWorker: Fatal error — ${e.message}")
+            Result.failure(workDataOf("STATUS" to "Sync failed — try again"))
         }
     }
 }

@@ -53,6 +53,14 @@ import com.example.grocerycompare.data.repository.MasterCatalogueRepository
 import com.example.grocerycompare.data.source.remote.ScrapeProgress
 import com.example.grocerycompare.ui.theme.*
 
+private fun String.isSafeImageUrl(): Boolean =
+    startsWith("https://") && (
+        contains("woolworths.com.au") ||
+        contains("coles.com.au") ||
+        contains("aldi.com.au") ||
+        contains("cloudfront.net")
+    )
+
 // ─────────────────────────────────────────────────────────────────────────────
 // Store brand colours (intentionally fixed — not theme-aware)
 // ─────────────────────────────────────────────────────────────────────────────
@@ -656,7 +664,7 @@ fun MasterProductCard(product: MasterProductEntity, selectedStores: Set<String>)
                     shape    = RoundedCornerShape(10.dp),
                     color    = MaterialTheme.colorScheme.surfaceVariant,
                 ) {
-                    if (product.imageUrl.isNotEmpty()) {
+                    if (product.imageUrl.isNotEmpty() && product.imageUrl.isSafeImageUrl()) {
                         AsyncImage(
                             model            = product.imageUrl,
                             contentDescription = product.universalName,
