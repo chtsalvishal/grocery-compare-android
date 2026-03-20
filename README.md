@@ -4,6 +4,14 @@ An Android app that compares weekly specials across Australian supermarkets (Col
 
 ---
 
+## Screenshots
+
+| Home | Profile |
+|------|---------|
+| ![Home screen](screenshots/Homescreen.png) | ![Profile screen](screenshots/Profile.png) |
+
+---
+
 ## What it does
 
 - Syncs weekly specials from the [GroceryCompare Backend API](https://github.com/chtsalvishal/grocery-compare-api) (hosted on Render)
