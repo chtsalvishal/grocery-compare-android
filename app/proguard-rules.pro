@@ -46,3 +46,6 @@
 -dontwarn org.checkerframework.**
 -dontwarn kotlin.annotations.jvm.**
 -dontwarn com.sun.jna.**
+# Ktor references JVM-only management classes for its IntelliJ debug detector
+-dontwarn java.lang.management.ManagementFactory
+-dontwarn java.lang.management.RuntimeMXBean
