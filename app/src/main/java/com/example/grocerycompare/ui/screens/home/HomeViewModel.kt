@@ -13,6 +13,7 @@ import com.example.grocerycompare.data.repository.MasterCatalogueRepository
 import com.example.grocerycompare.data.source.remote.ScrapeProgress
 import com.example.grocerycompare.data.source.remote.StoreStatus
 import com.example.grocerycompare.data.source.remote.SyncWorker
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
@@ -131,7 +132,8 @@ class HomeViewModel(
             sortOrder       = sort,
             syncError       = error,
         )
-    }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), HomeUiState())
+    }.flowOn(Dispatchers.Default)
+    .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), HomeUiState())
 
     init {
         viewModelScope.launch {
