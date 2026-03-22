@@ -49,6 +49,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import coil.compose.AsyncImage
+import coil.compose.SubcomposeAsyncImage
 import com.example.grocerycompare.data.local.entity.MasterProductEntity
 import com.example.grocerycompare.data.repository.MasterCatalogueRepository
 import com.example.grocerycompare.data.source.remote.ScrapeProgress
@@ -668,11 +669,19 @@ fun MasterProductCard(product: MasterProductEntity, selectedStores: Set<String>)
                     color    = MaterialTheme.colorScheme.surfaceVariant,
                 ) {
                     if (product.imageUrl.isNotEmpty()) {
-                        AsyncImage(
+                        SubcomposeAsyncImage(
                             model            = product.imageUrl,
                             contentDescription = product.universalName,
                             contentScale     = ContentScale.Fit,
                             modifier         = Modifier.fillMaxSize().padding(6.dp),
+                            error            = {
+                                Icon(
+                                    Icons.Default.Search,
+                                    contentDescription = null,
+                                    tint     = MaterialTheme.colorScheme.onSurfaceVariant,
+                                    modifier = Modifier.padding(14.dp),
+                                )
+                            },
                         )
                     } else {
                         Icon(
