@@ -41,6 +41,7 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.text.style.TextOverflow
@@ -92,11 +93,11 @@ fun HomeScreen(repository: MasterCatalogueRepository) {
     val viewModel: HomeViewModel = viewModel(factory = HomeViewModel.Factory(application, repository))
     val uiState by viewModel.uiState.collectAsState()
 
-    Box(modifier = Modifier.fillMaxSize().background(FreshGreen)) {
+    Box(modifier = Modifier.fillMaxSize().background(MaterialTheme.colorScheme.primary)) {
         Scaffold(
             containerColor = Color.Transparent,
             topBar = {
-                Surface(color = FreshGreen, modifier = Modifier.fillMaxWidth()) {
+                Surface(color = MaterialTheme.colorScheme.primary, modifier = Modifier.fillMaxWidth()) {
                     CenterAlignedTopAppBar(
                         title = {
                             Column(horizontalAlignment = Alignment.CenterHorizontally) {
@@ -104,12 +105,12 @@ fun HomeScreen(repository: MasterCatalogueRepository) {
                                     "Smart Compare",
                                     style = MaterialTheme.typography.titleMedium,
                                     fontWeight = FontWeight.Bold,
-                                    color = Color.White,
+                                    color = MaterialTheme.colorScheme.onPrimary,
                                 )
                                 Text(
                                     "${uiState.suburb}  •  ${uiState.postcode}",
                                     style = MaterialTheme.typography.labelSmall,
-                                    color = Color.White.copy(alpha = 0.75f),
+                                    color = MaterialTheme.colorScheme.onPrimary.copy(alpha = 0.75f),
                                 )
                             }
                         },
@@ -125,10 +126,10 @@ fun HomeScreen(repository: MasterCatalogueRepository) {
                                     CircularProgressIndicator(
                                         modifier = Modifier.size(20.dp),
                                         strokeWidth = 2.dp,
-                                        color = Color.White,
+                                        color = MaterialTheme.colorScheme.onPrimary,
                                     )
                                 } else {
-                                    Icon(Icons.Default.Refresh, contentDescription = "Refresh", tint = Color.White)
+                                    Icon(Icons.Default.Refresh, contentDescription = "Refresh", tint = MaterialTheme.colorScheme.onPrimary)
                                 }
                             }
                         },
@@ -384,9 +385,18 @@ fun DealCountBar(count: Int, isRefreshing: Boolean) {
 // ─────────────────────────────────────────────────────────────────────────────
 @Composable
 fun SearchBar(query: String, onQueryChange: (String) -> Unit) {
+    var searchText by remember { mutableStateOf(TextFieldValue("")) }
+
+    LaunchedEffect(Unit) {
+        searchText = TextFieldValue(query)
+    }
+
     OutlinedTextField(
-        value       = query,
-        onValueChange = onQueryChange,
+        value       = searchText,
+        onValueChange = { newValue ->
+            searchText = newValue
+            onQueryChange(newValue.text)
+        },
         modifier    = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 10.dp),
         placeholder = {
             Text("Search deals…", color = MaterialTheme.colorScheme.onSurfaceVariant)
@@ -800,7 +810,7 @@ fun StorePriceTile(entry: StorePriceEntry, isCheapest: Boolean, modifier: Modifi
                 Surface(color = FreshGreen, shape = RoundedCornerShape(4.dp)) {
                     Text(
                         text       = "BEST PRICE",
-                        color      = Color.White,
+                        color      = MaterialTheme.colorScheme.onPrimary,
                         fontWeight = FontWeight.Bold,
                         fontSize   = 8.sp,
                         modifier   = Modifier.padding(horizontal = 6.dp, vertical = 2.dp),
@@ -895,9 +905,9 @@ fun EmptyScreen(onScrape: () -> Unit) {
             shape    = RoundedCornerShape(14.dp),
             colors   = ButtonDefaults.buttonColors(containerColor = FreshGreen),
         ) {
-            Icon(Icons.Default.Refresh, contentDescription = null, tint = Color.White)
+            Icon(Icons.Default.Refresh, contentDescription = null, tint = MaterialTheme.colorScheme.onPrimary)
             Spacer(modifier = Modifier.width(8.dp))
-            Text("Sync Fresh Prices", fontWeight = FontWeight.Bold, color = Color.White)
+            Text("Sync Fresh Prices", fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onPrimary)
         }
     }
 }
