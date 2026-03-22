@@ -246,7 +246,7 @@ fun FilterRow(
                         text       = store,
                         style      = MaterialTheme.typography.labelMedium,
                         fontWeight = FontWeight.Bold,
-                        color      = if (selected) Color.White else color,
+                        color      = if (selected) Color.White else MaterialTheme.colorScheme.onSurface,
                         modifier   = Modifier.padding(horizontal = 12.dp, vertical = 6.dp),
                     )
                 }
